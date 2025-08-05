@@ -1,0 +1,47 @@
+#ALUNO: JOSÉ IVINES MATOS SILVA
+#DICSCIPLINA: PROCESSAMENTO DIGITAL DE SINAIS (UFCG)
+#OBJETIVO DO CÓDIGO:IMPLEMENTAÇÃO DA TRANSFORMADA RÁPIDA DE FOURIER (FFT) - FFT por Decimação no tempo por metodo iterativo
+
+def fft_iterativo(x):
+    N = len(x)
+
+    if not ((N > 0) and (N & (N - 1) == 0)):
+        raise ValueError("O tamanho do sinal de entrada deve ser uma potência de 2.")
+
+    #Reordenação por Bit-Reverso Direta (substitui a matriz P)
+    #Copia os dados para um novo array para realizar os cálculos
+    X = np.asarray(x, dtype=complex)
+    
+    #Calcula os índices de bit reverso
+    num_bits = int(np.log2(N))
+    revertendo_indices = np.zeros(N, dtype=int)
+    for i in range(N):
+        indice = format(i, f'0{num_bits}b')
+        revertendo_indices[i] = int(indice[::-1], 2)
+    
+    #Reordenação da matriz de entrada
+    X = X[revertendo_indices]
+
+    #Loop através dos estágios (m = 1, 2, ..., log2(N))
+    for m in range(1, num_bits + 1):
+        # L é o tamanho da DFT que está sendo construída neste estágio
+        L = 2**m
+        L_half = L // 2
+        
+        # Calcula os "twiddle factors" para este estágio
+        twiddle_factors = np.exp(-2j * np.pi * np.arange(L_half) / L)
+
+        # Loop através dos blocos de borboleta dentro do estágio
+        for k in range(0, N, L):
+            # Loop através das operações de borboleta dentro de cada bloco
+            for j in range(L_half):
+                # Índices dos dois elementos da borboleta
+                idx1 = k + j
+                idx2 = k + j + L_half
+
+                # Aplica a operação de borboleta
+                t = twiddle_factors[j] * X[idx2]
+                X[idx2] = X[idx1] - t
+                X[idx1] = X[idx1] + t
+    
+    return X
